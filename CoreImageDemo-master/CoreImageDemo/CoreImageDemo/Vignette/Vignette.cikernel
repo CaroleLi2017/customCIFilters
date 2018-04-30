@@ -1,0 +1,37 @@
+bool isEqual(float x, float y)
+{
+    if (abs(x - y) < (1e-6))
+    {
+        return true;
+    }
+
+    return false;
+}
+
+kernel vec4 vignetteKernel(__sample image, __sample mask1, __sample mask2, float globalExp, float mask1Exp, float mask2Exp, float alpha)
+{
+    // Caculate result exposure value
+    float resultExp = globalExp;
+    if (isEqual(mask1.a, 0.0) && isEqual(mask2.a, 0.0)) {
+        // Do nothing
+        return image.rgba;
+    }
+    else if (isEqual(mask1.a, 0.0) && !isEqual(mask2.a, 0.0)) {
+        resultExp += mask2Exp;
+    }
+    else if (!isEqual(mask1.a, 0.0) && isEqual(mask2.a, 0.0)) {
+        resultExp += mask1Exp;
+    }
+    else if (!isEqual(mask1.a, 0.0) && !isEqual(mask2.a, 0.0)) {
+        resultExp = resultExp + mask1Exp + mask2Exp;
+    }
+
+    if (isEqual(resultExp, 0.0)) {
+        return image.rgba;
+    }
+
+    // Apply exposure value
+    image.rgb *= resultExp * alpha;
+
+    return image.rgba;
+}
